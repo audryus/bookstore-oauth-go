@@ -29,8 +29,8 @@ var (
 
 type accessToken struct {
 	Token    string `json:"access_token"`
-	UserID   string `json:"user_id"`
-	ClientID string `json:"client_id"`
+	UserID   int64  `json:"user_id"`
+	ClientID int64  `json:"client_id"`
 }
 
 type client struct{}
@@ -43,7 +43,7 @@ func IsPublic(request *http.Request) bool {
 	if request == nil {
 		return true
 	}
-	return request.Header.Get("headerXPublic") == "true"
+	return request.Header.Get(headerXPublic) == "true"
 }
 
 //GetCallerID return caller ID, 0 if absent/error
@@ -121,6 +121,7 @@ func getAccessToken(at string) (*accessToken, *errors.RestErr) {
 	}
 	var token accessToken
 	if err := json.Unmarshal(response.Bytes(), &token); err != nil {
+		fmt.Printf(fmt.Sprintf("%v", response))
 		return nil, errors.InternalServerError("error when trying to unmarshal access token response")
 	}
 	return &token, nil
