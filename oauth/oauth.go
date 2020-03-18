@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/federicoleon/golang-restclient/rest"
-	"gitlab.com/aubayaml/aubayaml-go/bookstore/oauth-go/oauth/errors"
+	"gitlab.com/aubayaml/aubayaml-go/bookstore/utils-go/errors"
 )
 
 const (
@@ -80,7 +80,7 @@ func AuthenticateRequest(request *http.Request) *errors.RestErr {
 
 	accessTokenID := strings.TrimSpace(request.URL.Query().Get(paramAccessToke))
 	if accessTokenID == "" {
-		return nil
+		return errors.UnautorizedError()
 	}
 	at, err := getAccessToken(accessTokenID)
 
@@ -109,20 +109,20 @@ func cleanRequest(request *http.Request) {
 func getAccessToken(at string) (*accessToken, *errors.RestErr) {
 	response := oauthRestClient.Get(fmt.Sprintf("/oauth/access/%s", at))
 	if response == nil || response.Response == nil {
-		return nil, errors.InternalServerError("invalid rest client response when trying to get access token")
+		return nil, errors.InternalServerError("invalid rest client response when trying to get access token", errors.New("oAuth Out of Reach"))
 	}
 	if response.StatusCode > 299 {
 		var restErr errors.RestErr
 		err := json.Unmarshal(response.Bytes(), &restErr)
 		if err != nil {
-			return nil, errors.InternalServerError("invalid error interface when trying to get access token")
+			return nil, errors.InternalServerError("invalid error interface when trying to get access token", err)
 		}
 		return nil, &restErr
 	}
 	var token accessToken
 	if err := json.Unmarshal(response.Bytes(), &token); err != nil {
 		fmt.Printf(fmt.Sprintf("%v", response))
-		return nil, errors.InternalServerError("error when trying to unmarshal access token response")
+		return nil, errors.InternalServerError("error when trying to unmarshal access token response", err)
 	}
 	return &token, nil
 }
