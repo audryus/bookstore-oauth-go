@@ -71,7 +71,7 @@ func GetClientID(request *http.Request) int64 {
 }
 
 //AuthenticateRequest for token
-func AuthenticateRequest(request *http.Request) *errors.RestErr {
+func AuthenticateRequest(request *http.Request) errors.RestErr {
 	if request == nil {
 		return nil
 	}
@@ -85,7 +85,7 @@ func AuthenticateRequest(request *http.Request) *errors.RestErr {
 	at, err := getAccessToken(accessTokenID)
 
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.Status() == http.StatusNotFound {
 			return nil
 		}
 		return err
@@ -106,7 +106,7 @@ func cleanRequest(request *http.Request) {
 }
 
 //URL oauth/access/:token_id
-func getAccessToken(at string) (*accessToken, *errors.RestErr) {
+func getAccessToken(at string) (*accessToken, errors.RestErr) {
 	response := oauthRestClient.Get(fmt.Sprintf("/oauth/access/%s", at))
 	if response == nil || response.Response == nil {
 		return nil, errors.InternalServerError("invalid rest client response when trying to get access token", errors.New("oAuth Out of Reach"))
@@ -117,7 +117,7 @@ func getAccessToken(at string) (*accessToken, *errors.RestErr) {
 		if err != nil {
 			return nil, errors.InternalServerError("invalid error interface when trying to get access token", err)
 		}
-		return nil, &restErr
+		return nil, restErr
 	}
 	var token accessToken
 	if err := json.Unmarshal(response.Bytes(), &token); err != nil {
